@@ -55,24 +55,24 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CTRL-01 | — | Pending |
-| CTRL-02 | — | Pending |
-| CTRL-03 | — | Pending |
-| CTRL-04 | — | Pending |
-| CTRL-05 | — | Pending |
-| CTRL-06 | — | Pending |
-| SRVC-01 | — | Pending |
-| SRVC-02 | — | Pending |
-| SRVC-03 | — | Pending |
-| RELY-01 | — | Pending |
-| RELY-02 | — | Pending |
-| RELY-03 | — | Pending |
+| CTRL-01 | Phase 2 | Pending |
+| CTRL-02 | Phase 2 | Pending |
+| CTRL-03 | Phase 2 | Pending |
+| CTRL-04 | Phase 2 | Pending |
+| CTRL-05 | Phase 2 | Pending |
+| CTRL-06 | Phase 2 | Pending |
+| SRVC-01 | Phase 3 | Pending |
+| SRVC-02 | Phase 3 | Pending |
+| SRVC-03 | Phase 3 | Pending |
+| RELY-01 | Phase 4 | Pending |
+| RELY-02 | Phase 4 | Pending |
+| RELY-03 | Phase 4 | Pending |
 
 **Coverage:**
 - v1 requirements: 12 total
-- Mapped to phases: 0
-- Unmapped: 12 ⚠️
+- Mapped to phases: 12
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-29*
-*Last updated: 2026-03-29 after initial definition*
+*Last updated: 2026-03-29 after roadmap creation*
