@@ -223,13 +223,15 @@
 <div class="idle" id="idle">
   <div class="clock" id="clock">00:00</div>
   <div class="idle-name" id="idleName">Kitchen Speaker</div>
+  <div id="debugStatus" style="position:fixed;bottom:10px;left:10px;font-size:12px;color:#444;font-family:monospace;"></div>
 </div>
 
 <script>
   // ---- Config ----
-  const MQTT_WS = 'ws://' + window.location.hostname + ':9001';
+  const MQTT_WS = 'ws://localhost:9001';
   const TOPIC = 'shairport-sync';
   const SAMPLE_RATE = 44100;
+  const DEBUG = true;
 
   // ---- State ----
   let playing = false;
@@ -270,9 +272,19 @@
 
     client.on('connect', function() {
       client.subscribe(TOPIC + '/#');
+      if (DEBUG) document.getElementById('debugStatus').textContent = 'MQTT: connected, subscribed to ' + TOPIC + '/#';
+    });
+
+    client.on('error', function(err) {
+      if (DEBUG) document.getElementById('debugStatus').textContent = 'MQTT error: ' + err.message;
+    });
+
+    client.on('close', function() {
+      if (DEBUG) document.getElementById('debugStatus').textContent = 'MQTT: disconnected';
     });
 
     client.on('message', function(topic, message) {
+      if (DEBUG) document.getElementById('debugStatus').textContent = 'MSG: ' + topic;
       const sub = topic.substring(TOPIC.length + 1);
       const text = message.toString();
 
@@ -309,9 +321,7 @@
       }
     });
 
-    client.on('error', function() {
-      // Will auto-reconnect
-    });
+    // Reconnect handled by mqtt.js automatically
   }
 
   // ---- Playback State ----
