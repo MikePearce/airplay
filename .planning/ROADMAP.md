@@ -28,7 +28,9 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. `dbus-send` PlayPause from the pi user causes the streaming device to pause — AirPlay 2 remote control is functional
   3. `mosquitto_sub -t 'shairport-sync/#' -v` shows button press messages arriving when the touchscreen is tapped — MQTT topic alignment confirmed
   4. D-Bus policy grants the pi user `send_destination` access to `org.gnome.ShairportSync` without AccessDenied errors
-**Plans**: TBD
+**Plans:** 1 plan
+Plans:
+- [ ] 01-01-PLAN.md — Verify D-Bus, AirPlay 2 control, and MQTT flow on real Pi hardware
 
 ### Phase 2: Bridge Implementation
 **Goal**: Touchscreen control buttons work end-to-end — all six commands received from MQTT and forwarded to Shairport-Sync via D-Bus
@@ -70,7 +72,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Environment Verification | 0/? | Not started | - |
+| 1. Environment Verification | 0/1 | Not started | - |
 | 2. Bridge Implementation | 0/? | Not started | - |
 | 3. Service Deployment | 0/? | Not started | - |
 | 4. Reliability Hardening | 0/? | Not started | - |
