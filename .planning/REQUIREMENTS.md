@@ -9,12 +9,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Playback Control
 
-- [ ] **CTRL-01**: User can play/pause playback from touchscreen
-- [ ] **CTRL-02**: User can skip to next track from touchscreen
-- [ ] **CTRL-03**: User can skip to previous track from touchscreen
-- [ ] **CTRL-04**: User can increase volume from touchscreen
-- [ ] **CTRL-05**: User can decrease volume from touchscreen
-- [ ] **CTRL-06**: User can toggle mute from touchscreen
+- [ ] **CTRL-04**: User can increase volume from touchscreen (via ALSA amixer)
+- [ ] **CTRL-05**: User can decrease volume from touchscreen (via ALSA amixer)
+- [ ] **CTRL-06**: User can toggle mute from touchscreen (via ALSA amixer)
 
 ### Service
 
@@ -41,6 +38,9 @@ Deferred to future release. Tracked but not in current roadmap.
 
 | Feature | Reason |
 |---------|--------|
+| **CTRL-01**: Play/pause control | DACP permanently broken on modern iOS (confirmed Phase 1 verification, issue #1822) |
+| **CTRL-02**: Next track control | DACP permanently broken on modern iOS (confirmed Phase 1 verification, issue #1822) |
+| **CTRL-03**: Previous track control | DACP permanently broken on modern iOS (confirmed Phase 1 verification, issue #1822) |
 | Absolute volume set (drag-to-value) | Shairport-Sync SetVolume has limited device support; AirPlay volume range is non-obvious |
 | Bidirectional state sync | Shairport-Sync already publishes state to MQTT; bridge duplicating creates message loops |
 | HTTP REST API | MQTT is the agreed IPC layer; no need for another protocol |
@@ -55,12 +55,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CTRL-01 | Phase 2 | Pending |
-| CTRL-02 | Phase 2 | Pending |
-| CTRL-03 | Phase 2 | Pending |
-| CTRL-04 | Phase 2 | Pending |
-| CTRL-05 | Phase 2 | Pending |
-| CTRL-06 | Phase 2 | Pending |
+| CTRL-01 | — | Out of Scope (DACP broken, Phase 1) |
+| CTRL-02 | — | Out of Scope (DACP broken, Phase 1) |
+| CTRL-03 | — | Out of Scope (DACP broken, Phase 1) |
+| CTRL-04 | Phase 2 | Pending (via ALSA amixer) |
+| CTRL-05 | Phase 2 | Pending (via ALSA amixer) |
+| CTRL-06 | Phase 2 | Pending (via ALSA amixer) |
 | SRVC-01 | Phase 3 | Pending |
 | SRVC-02 | Phase 3 | Pending |
 | SRVC-03 | Phase 3 | Pending |
@@ -69,9 +69,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | RELY-03 | Phase 4 | Pending |
 
 **Coverage:**
-- v1 requirements: 12 total
-- Mapped to phases: 12
-- Unmapped: 0 ✓
+- v1 requirements: 9 active (3 descoped to Out of Scope after Phase 1 verification)
+- Mapped to phases: 9
+- Unmapped: 0
+- Out of Scope: CTRL-01, CTRL-02, CTRL-03 (DACP broken on modern iOS)
 
 ---
 *Requirements defined: 2026-03-29*

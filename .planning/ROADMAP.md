@@ -2,7 +2,7 @@
 
 ## Overview
 
-Four phases deliver a working MQTT-to-D-Bus bridge that makes the touchscreen control buttons functional. Phase 1 verifies the hardware environment before writing any code — two showstopper blockers (D-Bus interface absent, AirPlay 2 DACP broken) can only be confirmed on the real Pi. Phases 2-4 build, deploy, and harden the bridge in sequence.
+Four phases deliver a working MQTT-to-ALSA bridge that makes the touchscreen volume control buttons functional. Phase 1 verified the hardware environment — D-Bus interface is present but DACP is permanently broken on modern iOS, so play/pause/next/prev are descoped. Phases 2-4 build, deploy, and harden a volume-only bridge (amixer sset PCM) in sequence.
 
 ## Phases
 
@@ -12,8 +12,8 @@ Four phases deliver a working MQTT-to-D-Bus bridge that makes the touchscreen co
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Environment Verification** - Confirm D-Bus interface, AirPlay 2 compatibility, and MQTT flow on the actual Pi before writing any code
-- [ ] **Phase 2: Bridge Implementation** - Build the MQTT-to-D-Bus bridge that maps all six touchscreen commands to Shairport-Sync D-Bus methods
+- [x] **Phase 1: Environment Verification** - Confirm D-Bus interface, AirPlay 2 compatibility, and MQTT flow on the actual Pi before writing any code (completed 2026-03-29)
+- [ ] **Phase 2: Bridge Implementation** - Build the MQTT-to-ALSA bridge for volume control (volumeup, volumedown, mutetoggle) via amixer; grey out play/pause/skip buttons
 - [ ] **Phase 3: Service Deployment** - Package the bridge as a systemd service with boot start, journald logging, and graceful error handling
 - [ ] **Phase 4: Reliability Hardening** - Add MQTT auto-reconnect, configurable topic prefix, and startup connectivity warnings
 
@@ -28,20 +28,20 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. `dbus-send` PlayPause from the pi user causes the streaming device to pause — AirPlay 2 remote control is functional
   3. `mosquitto_sub -t 'shairport-sync/#' -v` shows button press messages arriving when the touchscreen is tapped — MQTT topic alignment confirmed
   4. D-Bus policy grants the pi user `send_destination` access to `org.gnome.ShairportSync` without AccessDenied errors
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 Plans:
-- [ ] 01-01-PLAN.md — Verify D-Bus, AirPlay 2 control, and MQTT flow on real Pi hardware
+- [x] 01-01-PLAN.md — Verify D-Bus, AirPlay 2 control, and MQTT flow on real Pi hardware (PARTIAL PASS: D-Bus/MQTT pass, DACP fail — pivot to volume-only)
 
 ### Phase 2: Bridge Implementation
-**Goal**: Touchscreen control buttons work end-to-end — all six commands received from MQTT and forwarded to Shairport-Sync via D-Bus
+**Goal**: Volume control buttons work end-to-end — volumeup/volumedown/mutetoggle received from MQTT and executed via ALSA amixer on the Dragonfly Black DAC (PCM mixer). Play/pause/next/prev buttons greyed out in UI.
 **Depends on**: Phase 1
-**Requirements**: CTRL-01, CTRL-02, CTRL-03, CTRL-04, CTRL-05, CTRL-06
+**Requirements**: CTRL-04, CTRL-05, CTRL-06 (CTRL-01/02/03 descoped — DACP broken)
 **Success Criteria** (what must be TRUE):
-  1. Tapping play/pause on the touchscreen pauses and resumes AirPlay playback
-  2. Tapping next/previous on the touchscreen skips tracks on the streaming device
-  3. Tapping volume up/down on the touchscreen changes the AirPlay volume level
-  4. Tapping mute on the touchscreen toggles mute on the AirPlay stream
-  5. The bridge continues running and does not crash when a D-Bus call fails (e.g., no active AirPlay session)
+  1. Tapping volume up on the touchscreen increases the Pi's audio output volume via `amixer sset PCM`
+  2. Tapping volume down on the touchscreen decreases the Pi's audio output volume via `amixer sset PCM`
+  3. Tapping mute on the touchscreen toggles mute on the PCM mixer
+  4. Play/pause and next/prev buttons are visually disabled or hidden in the UI
+  5. The bridge continues running and does not crash when an amixer command fails
 **Plans**: TBD
 
 ### Phase 3: Service Deployment
@@ -72,7 +72,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Environment Verification | 0/1 | Not started | - |
+| 1. Environment Verification | 1/1 | Complete (partial pass) | 2026-03-29 |
 | 2. Bridge Implementation | 0/? | Not started | - |
 | 3. Service Deployment | 0/? | Not started | - |
 | 4. Reliability Hardening | 0/? | Not started | - |
