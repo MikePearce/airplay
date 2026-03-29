@@ -9,9 +9,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Playback Control
 
-- [ ] **CTRL-04**: User can increase volume from touchscreen (via ALSA amixer)
-- [ ] **CTRL-05**: User can decrease volume from touchscreen (via ALSA amixer)
-- [ ] **CTRL-06**: User can toggle mute from touchscreen (via ALSA amixer)
+- [x] **CTRL-04**: User can increase volume from touchscreen (via ALSA amixer)
+- [x] **CTRL-05**: User can decrease volume from touchscreen (via ALSA amixer)
+- [x] **CTRL-06**: User can toggle mute from touchscreen (via ALSA amixer)
 
 ### Service
 

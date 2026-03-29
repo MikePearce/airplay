@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 01-01-PLAN.md
-last_updated: "2026-03-29T17:10:00Z"
-last_activity: 2026-03-29 — Phase 1 verification complete, pivot to volume-only bridge
+status: checkpoint
+stopped_at: Task 3 of 02-01-PLAN.md (human-verify checkpoint)
+last_updated: "2026-03-29T18:47:00Z"
+last_activity: 2026-03-29 — Phase 2 plan 1 tasks 1-2 complete, awaiting Pi hardware verification
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 1
+  total_plans: 2
   completed_plans: 1
-  percent: 25
+  percent: 38
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 ## Current Position
 
 Phase: 2 of 4 (Bridge Implementation)
-Plan: 0 of ? in current phase
-Status: Ready to plan Phase 2
-Last activity: 2026-03-29 — Phase 1 complete, pivot to volume-only bridge
+Plan: 1 of 1 in current phase (at checkpoint — awaiting human-verify)
+Status: Awaiting hardware verification on Pi
+Last activity: 2026-03-29 — Tasks 1-2 of 02-01 complete; bridge.py and updated nowplaying.html ready to deploy
 
-Progress: [##░░░░░░░░] 25%
+Progress: [###░░░░░░░] 38%
 
 ## Performance Metrics
 
@@ -65,20 +65,22 @@ Recent decisions affecting current work:
 - [Phase 1]: Pivot to volume-only bridge — CTRL-01/02/03 (play/pause/next/prev) descoped to Out of Scope
 - [Phase 1]: Volume control via ALSA amixer sset PCM instead of D-Bus — Dragonfly Black DAC with PCM mixer control confirmed working
 - [Phase 1]: Bridge architecture changes from MQTT-to-D-Bus (jeepney) to MQTT-to-ALSA (subprocess amixer calls) — jeepney may no longer be needed
+- [Phase 2 plan 1]: Playback controls fully removed from UI (not greyed out) — DACP permanently broken, cleaner UX
+- [Phase 2 plan 1]: paho-mqtt v2 CallbackAPIVersion.VERSION2 used — future-proof against v1 deprecation
+- [Phase 2 plan 1]: Dedicated volume-down button added to UI (not relying solely on volume track click) — better touchscreen UX
 
 ### Pending Todos
 
-- Phase 2 planning must reflect the pivot: MQTT-to-ALSA architecture, 3-command scope (volumeup, volumedown, mutetoggle), UI button changes
-- Play/pause/next/prev buttons need to be greyed out or hidden in nowplaying.html
+- Deploy bridge.py and updated nowplaying.html to Pi and verify volume control end-to-end (Task 3 of 02-01)
 
 ### Blockers/Concerns
 
 - [RESOLVED - Phase 1]: Shairport-Sync D-Bus interface is compiled in and registered. No issue.
 - [RESOLVED - Phase 1]: AirPlay 2 DACP confirmed broken. Decision made: volume-only bridge.
-- [Phase 2]: Need to determine exact amixer commands for volume increment/decrement and mute toggle on the Dragonfly Black DAC (PCM mixer)
+- [RESOLVED - Phase 2 plan 1]: amixer commands confirmed: "amixer sset PCM 5%+" / "5%-" / "toggle"
 
 ## Session Continuity
 
-Last session: 2026-03-29T17:10:00Z
-Stopped at: Completed 01-01-PLAN.md
-Resume file: .planning/phases/01-environment-verification/01-01-SUMMARY.md
+Last session: 2026-03-29T18:47:00Z
+Stopped at: Task 3 (human-verify) of 02-01-PLAN.md
+Resume file: .planning/phases/02-bridge-implementation/02-01-SUMMARY.md

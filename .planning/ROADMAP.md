@@ -13,7 +13,7 @@ Four phases deliver a working MQTT-to-ALSA bridge that makes the touchscreen vol
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Environment Verification** - Confirm D-Bus interface, AirPlay 2 compatibility, and MQTT flow on the actual Pi before writing any code (completed 2026-03-29)
-- [ ] **Phase 2: Bridge Implementation** - Build the MQTT-to-ALSA bridge for volume control (volumeup, volumedown, mutetoggle) via amixer; grey out play/pause/skip buttons
+- [x] **Phase 2: Bridge Implementation** - Build the MQTT-to-ALSA bridge for volume control (volumeup, volumedown, mutetoggle) via amixer; grey out play/pause/skip buttons (completed 2026-03-29)
 - [ ] **Phase 3: Service Deployment** - Package the bridge as a systemd service with boot start, journald logging, and graceful error handling
 - [ ] **Phase 4: Reliability Hardening** - Add MQTT auto-reconnect, configurable topic prefix, and startup connectivity warnings
 
@@ -73,6 +73,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Environment Verification | 1/1 | Complete (partial pass) | 2026-03-29 |
-| 2. Bridge Implementation | 0/? | Not started | - |
+| 2. Bridge Implementation | 1/1 | Complete   | 2026-03-29 |
 | 3. Service Deployment | 0/? | Not started | - |
 | 4. Reliability Hardening | 0/? | Not started | - |
