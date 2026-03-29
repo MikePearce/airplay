@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1024,height=600,user-scalable=no">
+<title>Now Playing</title>
+<script src="https://unpkg.com/mqtt@5/dist/mqtt.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --accent: #00e8a0;
+    --bg: #0d0d0d;
+    --surface: #1a1a1a;
+    --text: #ffffff;
+    --text-dim: #888888;
+    --text-muted: #555555;
+  }
+  body {
+    width: 1024px; height: 600px; overflow: hidden;
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    cursor: none; user-select: none;
+  }
+
+  /* ---- Player View ---- */
+  .player {
+    display: flex; width: 100%; height: 100%;
+    padding: 40px; gap: 44px; align-items: center;
+    opacity: 0; transition: opacity 0.6s ease;
+  }
+  .player.visible { opacity: 1; }
+
+  /* Left column */
+  .left { display: flex; flex-direction: column; flex-shrink: 0; }
+  .artwork {
+    width: 380px; height: 380px; border-radius: 16px;
+    background: var(--surface); overflow: hidden;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+  }
+  .artwork img {
+    width: 100%; height: 100%; object-fit: cover;
+    display: none;
+  }
+  .artwork img.loaded { display: block; }
+  .artwork-placeholder {
+    width: 100%; height: 100%; display: flex;
+    align-items: center; justify-content: center;
+  }
+  .artwork-placeholder svg { width: 80px; height: 80px; fill: var(--text-muted); }
+  .source { margin-top: 16px; }
+  .source-label {
+    font-size: 11px; text-transform: uppercase;
+    letter-spacing: 2.5px; color: var(--text-muted);
+    font-weight: 600;
+  }
+  .source-name { font-size: 16px; font-weight: 600; color: var(--text); margin-top: 2px; }
+
+  /* Right column */
+  .right {
+    flex: 1; display: flex; flex-direction: column;
+    justify-content: center; gap: 24px; min-width: 0;
+  }
+  .track-info { display: flex; flex-direction: column; gap: 4px; }
+  .track-title {
+    font-size: 38px; font-weight: 700; color: var(--accent);
+    line-height: 1.15; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+  .track-artist {
+    font-size: 26px; font-weight: 600; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .track-album {
+    font-size: 17px; color: var(--text-dim); margin-top: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  /* Progress */
+  .progress-section { display: flex; flex-direction: column; gap: 8px; }
+  .progress-bar {
+    width: 100%; height: 6px; background: #2a2a2a;
+    border-radius: 3px; overflow: hidden; cursor: pointer;
+  }
+  .progress-fill {
+    height: 100%; width: 0%; background: var(--accent);
+    border-radius: 3px; transition: width 0.3s linear;
+  }
+  .progress-times {
+    display: flex; justify-content: space-between;
+    font-size: 13px; color: var(--text-dim); font-variant-numeric: tabular-nums;
+  }
+
+  /* Controls */
+  .controls {
+    display: flex; align-items: center; justify-content: center; gap: 32px;
+  }
+  .btn {
+    background: none; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.1s ease, opacity 0.15s ease;
+  }
+  .btn:active { transform: scale(0.9); }
+  .btn-skip {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: #2a2a2a;
+  }
+  .btn-skip svg { width: 24px; height: 24px; fill: var(--text); }
+  .btn-playpause {
+    width: 80px; height: 80px; border-radius: 50%;
+    background: var(--accent);
+  }
+  .btn-playpause svg { width: 34px; height: 34px; fill: #0d0d0d; }
+
+  /* Volume */
+  .volume-section {
+    display: flex; align-items: center; gap: 14px;
+  }
+  .btn-vol {
+    width: 40px; height: 40px; flex-shrink: 0;
+  }
+  .btn-vol svg { width: 24px; height: 24px; fill: var(--text-dim); }
+  .btn-vol:active svg { fill: var(--accent); }
+
+  .volume-track {
+    flex: 1; height: 6px; background: #2a2a2a;
+    border-radius: 3px; position: relative; cursor: pointer;
+  }
+  .volume-fill {
+    height: 100%; background: var(--text-dim); border-radius: 3px;
+    position: relative; transition: width 0.2s ease;
+  }
+  .volume-thumb {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--accent); position: absolute;
+    right: -9px; top: -6px;
+  }
+
+  /* ---- Idle View ---- */
+  .idle {
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: var(--bg);
+    opacity: 1; transition: opacity 0.6s ease;
+    pointer-events: none;
+  }
+  .idle.hidden { opacity: 0; }
+  .clock {
+    font-size: 96px; font-weight: 200;
+    color: var(--text-muted); letter-spacing: 4px;
+  }
+  .idle-name {
+    font-size: 18px; color: var(--text-muted);
+    margin-top: 12px; letter-spacing: 1px;
+  }
+</style>
+</head>
+<body>
+
+<!-- Player View -->
+<div class="player" id="player">
+  <div class="left">
+    <div class="artwork" id="artworkContainer">
+      <div class="artwork-placeholder" id="placeholder">
+        <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+      </div>
+      <img id="cover" alt="">
+    </div>
+    <div class="source">
+      <div class="source-label">PLAYING FROM</div>
+      <div class="source-name" id="clientName">--</div>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="track-info">
+      <div class="track-title" id="title">--</div>
+      <div class="track-artist" id="artist">--</div>
+      <div class="track-album" id="album">--</div>
+    </div>
+
+    <div class="progress-section">
+      <div class="progress-bar" id="progressBar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="progress-times">
+        <span id="elapsed">0:00</span>
+        <span id="duration">0:00</span>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn btn-skip" id="btnPrev" onclick="sendCmd('previtem')">
+        <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+      </button>
+      <button class="btn btn-playpause" id="btnPlayPause" onclick="sendCmd('playpause')">
+        <svg id="iconPause" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        <svg id="iconPlay" viewBox="0 0 24 24" style="display:none;margin-left:3px"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+      <button class="btn btn-skip" id="btnNext" onclick="sendCmd('nextitem')">
+        <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+      </button>
+    </div>
+
+    <div class="volume-section">
+      <button class="btn btn-vol" onclick="sendCmd('mutetoggle')">
+        <svg id="volIcon" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+      </button>
+      <div class="volume-track" id="volumeTrack" onclick="handleVolClick(event)">
+        <div class="volume-fill" id="volumeFill" style="width:50%">
+          <div class="volume-thumb"></div>
+        </div>
+      </div>
+      <button class="btn btn-vol" onclick="sendCmd('volumeup')">
+        <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Idle View -->
+<div class="idle" id="idle">
+  <div class="clock" id="clock">00:00</div>
+  <div class="idle-name" id="idleName">Kitchen Speaker</div>
+</div>
+
+<script>
+  // ---- Config ----
+  const MQTT_WS = 'ws://' + window.location.hostname + ':9001';
+  const TOPIC = 'shairport-sync';
+  const SAMPLE_RATE = 44100;
+
+  // ---- State ----
+  let playing = false;
+  let prgStart = 0, prgCurrent = 0, prgEnd = 0;
+  let prgTimestamp = 0;
+  let currentVolume = 50;
+  let coverUrl = null;
+  let speakerName = 'Kitchen Speaker';
+
+  // ---- Elements ----
+  const elPlayer = document.getElementById('player');
+  const elIdle = document.getElementById('idle');
+  const elTitle = document.getElementById('title');
+  const elArtist = document.getElementById('artist');
+  const elAlbum = document.getElementById('album');
+  const elCover = document.getElementById('cover');
+  const elPlaceholder = document.getElementById('placeholder');
+  const elClientName = document.getElementById('clientName');
+  const elProgressFill = document.getElementById('progressFill');
+  const elElapsed = document.getElementById('elapsed');
+  const elDuration = document.getElementById('duration');
+  const elVolumeFill = document.getElementById('volumeFill');
+  const iconPlay = document.getElementById('iconPlay');
+  const iconPause = document.getElementById('iconPause');
+  const elClock = document.getElementById('clock');
+  const elIdleName = document.getElementById('idleName');
+  const elVolIcon = document.getElementById('volIcon');
+
+  // ---- MQTT ----
+  let client = null;
+  let reconnectTimer = null;
+
+  function mqttConnect() {
+    client = mqtt.connect(MQTT_WS, {
+      reconnectPeriod: 3000,
+      connectTimeout: 10000
+    });
+
+    client.on('connect', function() {
+      client.subscribe(TOPIC + '/#');
+    });
+
+    client.on('message', function(topic, message) {
+      const sub = topic.substring(TOPIC.length + 1);
+      const text = message.toString();
+
+      switch (sub) {
+        case 'title':
+          if (text && text !== '--') elTitle.textContent = text;
+          break;
+        case 'artist':
+          if (text && text !== '--') elArtist.textContent = text;
+          break;
+        case 'album':
+          if (text && text !== '--') elAlbum.textContent = text;
+          break;
+        case 'client_name':
+          if (text && text !== '--') {
+            elClientName.textContent = text;
+          }
+          break;
+        case 'playing':
+          setPlaying(text === '1');
+          break;
+        case 'volume':
+          handleVolume(text);
+          break;
+        case 'cover':
+          handleCover(message);
+          break;
+        case 'ssnc/prgr':
+          handleProgress(text);
+          break;
+        case 'play_end':
+          resetTrack();
+          break;
+      }
+    });
+
+    client.on('error', function() {
+      // Will auto-reconnect
+    });
+  }
+
+  // ---- Playback State ----
+  function setPlaying(state) {
+    playing = state;
+    if (playing) {
+      elPlayer.classList.add('visible');
+      elIdle.classList.add('hidden');
+      iconPlay.style.display = 'none';
+      iconPause.style.display = 'block';
+    } else {
+      iconPlay.style.display = 'block';
+      iconPause.style.display = 'none';
+    }
+  }
+
+  let idleTimeout = null;
+
+  function resetTrack() {
+    // Delay hiding the player so it doesn't flash on track changes
+    clearTimeout(idleTimeout);
+    idleTimeout = setTimeout(function() {
+      if (!playing) {
+        elPlayer.classList.remove('visible');
+        elIdle.classList.remove('hidden');
+        elTitle.textContent = '--';
+        elArtist.textContent = '--';
+        elAlbum.textContent = '--';
+        elElapsed.textContent = '0:00';
+        elDuration.textContent = '0:00';
+        elProgressFill.style.width = '0%';
+        if (coverUrl) { URL.revokeObjectURL(coverUrl); coverUrl = null; }
+        elCover.classList.remove('loaded');
+        elPlaceholder.style.display = 'flex';
+      }
+    }, 5000);
+  }
+
+  // ---- Cover Art ----
+  function handleCover(data) {
+    // data is a Buffer/Uint8Array of JPEG
+    if (data.length < 100) return; // Skip empty/placeholder
+    if (coverUrl) URL.revokeObjectURL(coverUrl);
+    var blob = new Blob([data], { type: 'image/jpeg' });
+    coverUrl = URL.createObjectURL(blob);
+    elCover.onload = function() {
+      elCover.classList.add('loaded');
+      elPlaceholder.style.display = 'none';
+    };
+    elCover.src = coverUrl;
+  }
+
+  // ---- Progress ----
+  function handleProgress(text) {
+    var parts = text.split('/');
+    if (parts.length === 3) {
+      prgStart = parseInt(parts[0], 10);
+      prgCurrent = parseInt(parts[1], 10);
+      prgEnd = parseInt(parts[2], 10);
+      prgTimestamp = performance.now();
+    }
+  }
+
+  function updateProgress() {
+    if (playing && prgEnd > prgStart) {
+      var now = performance.now();
+      var elapsedMs = now - prgTimestamp;
+      var extraFrames = (elapsedMs / 1000) * SAMPLE_RATE;
+      var current = prgCurrent + extraFrames;
+      var total = prgEnd - prgStart;
+      var done = current - prgStart;
+      var pct = Math.min(100, Math.max(0, (done / total) * 100));
+
+      elProgressFill.style.width = pct + '%';
+
+      var elapsedSec = Math.max(0, Math.floor(done / SAMPLE_RATE));
+      var totalSec = Math.floor(total / SAMPLE_RATE);
+      elElapsed.textContent = formatTime(elapsedSec);
+      elDuration.textContent = formatTime(totalSec);
+    }
+    requestAnimationFrame(updateProgress);
+  }
+
+  function formatTime(sec) {
+    if (isNaN(sec) || sec < 0) return '0:00';
+    var m = Math.floor(sec / 60);
+    var s = sec % 60;
+    return m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  // ---- Volume ----
+  function handleVolume(text) {
+    var parts = text.split(',');
+    if (parts.length >= 1) {
+      var airplayVol = parseFloat(parts[0]);
+      // AirPlay volume: -144 = mute, -30 to 0 = range
+      if (airplayVol <= -144) {
+        currentVolume = 0;
+        elVolIcon.innerHTML = '<path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>';
+      } else {
+        currentVolume = Math.round(((airplayVol + 30) / 30) * 100);
+        currentVolume = Math.min(100, Math.max(0, currentVolume));
+        elVolIcon.innerHTML = '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>';
+      }
+      elVolumeFill.style.width = currentVolume + '%';
+    }
+  }
+
+  function handleVolClick(e) {
+    var rect = e.currentTarget.getBoundingClientRect();
+    var x = e.clientX - rect.left;
+    var pct = x / rect.width;
+    if (pct < 0.5) {
+      sendCmd('volumedown');
+    } else {
+      sendCmd('volumeup');
+    }
+  }
+
+  // ---- Commands ----
+  function sendCmd(cmd) {
+    if (client && client.connected) {
+      client.publish(TOPIC + '/remote', cmd);
+    }
+  }
+
+  // ---- Clock ----
+  function updateClock() {
+    var now = new Date();
+    var h = now.getHours().toString().padStart(2, '0');
+    var m = now.getMinutes().toString().padStart(2, '0');
+    elClock.textContent = h + ':' + m;
+  }
+
+  // ---- Init ----
+  mqttConnect();
+  updateProgress();
+  updateClock();
+  setInterval(updateClock, 10000);
+
+  // Show cursor on touch, hide after idle
+  var cursorTimer = null;
+  document.addEventListener('touchstart', function() {
+    document.body.style.cursor = 'default';
+    clearTimeout(cursorTimer);
+    cursorTimer = setTimeout(function() {
+      document.body.style.cursor = 'none';
+    }, 3000);
+  });
+</script>
+</body>
+</html>
