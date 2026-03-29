@@ -90,35 +90,18 @@
     font-size: 13px; color: var(--text-dim); font-variant-numeric: tabular-nums;
   }
 
-  .btn {
-    background: none; border: none; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: transform 0.1s ease, opacity 0.15s ease;
-  }
-  .btn:active { transform: scale(0.9); }
-
-  /* Volume */
+  /* Volume indicator (read-only) */
   .volume-section {
     display: flex; align-items: center; gap: 14px;
   }
-  .btn-vol {
-    width: 40px; height: 40px; flex-shrink: 0;
-  }
-  .btn-vol svg { width: 24px; height: 24px; fill: var(--text-dim); }
-  .btn-vol:active svg { fill: var(--accent); }
-
+  .vol-icon { width: 24px; height: 24px; flex-shrink: 0; fill: var(--text-dim); }
   .volume-track {
     flex: 1; height: 6px; background: #2a2a2a;
-    border-radius: 3px; position: relative; cursor: pointer;
+    border-radius: 3px; position: relative;
   }
   .volume-fill {
     height: 100%; background: var(--text-dim); border-radius: 3px;
-    position: relative; transition: width 0.2s ease;
-  }
-  .volume-thumb {
-    width: 18px; height: 18px; border-radius: 50%;
-    background: var(--accent); position: absolute;
-    right: -9px; top: -6px;
+    transition: width 0.2s ease;
   }
 
   /* ---- Idle View ---- */
@@ -177,20 +160,10 @@
     </div>
 
     <div class="volume-section">
-      <button class="btn btn-vol" onclick="sendCmd('mutetoggle')">
-        <svg id="volIcon" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
-      </button>
-      <button class="btn btn-vol" onclick="sendCmd('volumedown')">
-        <svg viewBox="0 0 24 24"><path d="M18.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg>
-      </button>
-      <div class="volume-track" id="volumeTrack" onclick="handleVolClick(event)">
-        <div class="volume-fill" id="volumeFill" style="width:50%">
-          <div class="volume-thumb"></div>
-        </div>
+      <svg class="vol-icon" id="volIcon" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+      <div class="volume-track">
+        <div class="volume-fill" id="volumeFill" style="width:50%"></div>
       </div>
-      <button class="btn btn-vol" onclick="sendCmd('volumeup')">
-        <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
-      </button>
     </div>
   </div>
 </div>
@@ -397,24 +370,6 @@
         elVolIcon.innerHTML = '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>';
       }
       elVolumeFill.style.width = currentVolume + '%';
-    }
-  }
-
-  function handleVolClick(e) {
-    var rect = e.currentTarget.getBoundingClientRect();
-    var x = e.clientX - rect.left;
-    var pct = x / rect.width;
-    if (pct < 0.5) {
-      sendCmd('volumedown');
-    } else {
-      sendCmd('volumeup');
-    }
-  }
-
-  // ---- Commands ----
-  function sendCmd(cmd) {
-    if (client && client.connected) {
-      client.publish(TOPIC + '/remote', cmd);
     }
   }
 
